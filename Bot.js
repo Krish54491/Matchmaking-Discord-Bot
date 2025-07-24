@@ -5,7 +5,7 @@
 // create queues - Done
 // setup matches - Done
 // those matchs should have a timer(configurable)
-// at the end of match be able to take in a png file (a picture) and send it to desigated judges
+// at the end of match be able to take in a png file (a picture) and send it to desigated judges - scrapped
 // grant points and change ranks if needed
 // having a leaderboard system
 
@@ -20,7 +20,13 @@ const { match } = require('node:assert');
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 client.commands = new Collection();
-
+const teamNames = [ // the prompts
+    "Swift",
+    "Redshyft",
+    "Tenshi",
+    "Pulse",
+    "Nixus",
+];
 const foldersPath = path.join(__dirname, 'commands');
 const commandFolders = fs.readdirSync(foldersPath);
 
@@ -115,6 +121,21 @@ async function createMatchChannel(guild, player1, player2, judgeRoleId) {
     });
     return channel;
 }
+async function timerOutput(matchChannel){
+    let timeLeft = timer * 60; // Convert minutes to seconds
+    const interval = setInterval(() => {
+        if (timeLeft <= 0) {
+            clearInterval(interval);
+            matchChannel.send('Time is up! Please submit your designs.');
+        } else if (timeLeft % 600 === 0) { // Every 10 minutes
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            matchChannel.send(`Time left: ${minutes}m ${seconds}s`);
+        }
+        timeLeft--;
+    }, 1000);
+      
+}
 const announcementChannelId = "1397780307461017620";
 async function checkAndStartMatches() {
     findMatchingPlayers(async (err, matches) => {
@@ -133,25 +154,28 @@ async function checkAndStartMatches() {
                 const member2 = guild.members.cache.get(player2);
                 if (member1 && member2) {
                     const matchChannel = await createMatchChannel(guild, member1, member2, judgeRoleId);
-                    if (matchChannel) await matchChannel.send(`Match started between <@${player1}> and <@${player2}> (Rank: ${match.rank})!`);
+                    if (matchChannel) {
+                        await matchChannel.send(`Match started between <@${player1}> and <@${player2}> (Rank: ${match.rank})!`);
+                        await matchChannel.send(`Your prompt is: ${teamNames[Math.floor(Math.random() * teamNames.length)]}`);
+                        await timerOutput(matchChannel);
+                    }
                 } else {
-                    if(!member1){
+                    if(!player1){
                         db.run('DELETE FROM queue WHERE userid IN (?)', [player1], (err) => {
                             if (err) console.error('Error removing players from queue:', err);
                         });
                     }
-                    if(!member2){
+                    if(!player2){
                         db.run('DELETE FROM queue WHERE userid IN (?)', [player2], (err) => {
                             if (err) console.error('Error removing players from queue:', err);
                         });
                     }
                     console.log(`a player is not found ${player1} and ${player2}`);
-                    console.log(`a player is not found ${member1} and ${member2}`);
                     return;
                 }
                 db.run('DELETE FROM queue WHERE userid IN (?, ?)', [player1, player2], (err) => {
-                    if (err) console.error('Error removing players from queue:', err);
-                });
+                if (err) console.error('Error removing players from queue:', err);
+            }); 
             }
         }
     });

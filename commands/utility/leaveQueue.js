@@ -21,7 +21,7 @@ function removePlayerFromQueue(id,callback){
         if (err) return callback(err);
         const sql = `
           DELETE FROM queue
-          WHERE username = ?
+          WHERE userid = ?
         `;
         db.run(sql, [id], function (err) {
         if(rank === null) return callback(null,null);
@@ -48,6 +48,8 @@ module.exports = {
             if (err) {
               console.error(err);
               await interaction.reply('An unexpected error occurred while unqueueing.');
+            } else if(added === null) {
+              await interaction.reply('You are not registered! Please register first using /register.');
             } else if (!added) {
               await interaction.reply('You are not in queue!');
             } else {
