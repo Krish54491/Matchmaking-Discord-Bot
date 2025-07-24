@@ -2,8 +2,8 @@
 //  we have ranked graphic designing
 // be able to register to the competition - Done
 // be able to UNregister to the competition - Done
-// create queues
-// setup matches
+// create queues - Done
+// setup matches - Done
 // those matchs should have a timer(configurable)
 // at the end of match be able to take in a png file (a picture) and send it to desigated judges
 // grant points and change ranks if needed
@@ -14,7 +14,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { Client, Collection, Events, GatewayIntentBits, MessageFlags } = require('discord.js');
 const { token } = require('./config.json');
-
+const db = require('./db.js');
+const { match } = require('node:assert');
 // Create a new client instance
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
@@ -65,9 +66,19 @@ client.once(Events.ClientReady, readyClient => {
 // Log in to Discord with your client's token
 client.login(token);
 let timer = 60 // in minutes
-let queue = [];
 const ranks = {bronze: 0, silver: 1, gold: 2, platinum: 3, diamond: 4, master: 5, grandmaster: 6};
-
+function findMatchingPlayers(callback) {
+  const sql = `
+    SELECT rank, GROUP_CONCAT(userid) as users, COUNT(*) as count
+    FROM queue
+    GROUP BY rank
+    HAVING count >= 2
+  `;
+  db.all(sql, [], (err, rows) => {
+    if (err) return callback(err);
+    callback(null, rows);
+  });
+}
 // how a player is defined
 //player = {
 //    username: "",
@@ -76,7 +87,76 @@ const ranks = {bronze: 0, silver: 1, gold: 2, platinum: 3, diamond: 4, master: 5
 //    wins: 0,
 //
 //}
-
+async function createMatchChannel(guild, player1, player2, judgeRoleId) {
+    // Create a new text channel for the match
+    const username1 = player1 ? player1.user.username : player1;
+    const username2 = player2 ? player2.user.username : player2;
+    const channel = await guild.channels.create({
+        name: `match-${username1}-vs-${username2}`,
+        type: 0, // 0 = GUILD_TEXT
+        permissionOverwrites: [
+            {
+                id: guild.id, // @everyone
+                deny: ['ViewChannel'],
+            },
+            {
+                id: judgeRoleId, // Judge role
+                allow: ['ViewChannel', 'SendMessages'],
+            },
+            {
+                id: player1, // Player 1 user ID
+                allow: ['ViewChannel', 'SendMessages'],
+            },
+            {
+                id: player2, // Player 2 user ID
+                allow: ['ViewChannel', 'SendMessages'],
+            },
+        ],
+    });
+    return channel;
+}
+const announcementChannelId = "1397780307461017620";
+async function checkAndStartMatches() {
+    findMatchingPlayers(async (err, matches) => {
+        const guild = client.guilds.cache.first();
+        const channel = guild.channels.cache.get(announcementChannelId);
+        if (err) {
+            if (channel) await channel.send('Error checking queue for matches.');
+            return;
+        }
+        for (const match of matches){
+            const players = match.users.split(",");
+            if(players.length >= 2){
+                const [player1, player2] = players;
+                const judgeRoleId = '1361817820035289109'; // Replace with your Judge role ID
+                const member1 = guild.members.cache.get(player1);
+                const member2 = guild.members.cache.get(player2);
+                if (member1 && member2) {
+                    const matchChannel = await createMatchChannel(guild, member1, member2, judgeRoleId);
+                    if (matchChannel) await matchChannel.send(`Match started between <@${player1}> and <@${player2}> (Rank: ${match.rank})!`);
+                } else {
+                    if(!member1){
+                        db.run('DELETE FROM queue WHERE userid IN (?)', [player1], (err) => {
+                            if (err) console.error('Error removing players from queue:', err);
+                        });
+                    }
+                    if(!member2){
+                        db.run('DELETE FROM queue WHERE userid IN (?)', [player2], (err) => {
+                            if (err) console.error('Error removing players from queue:', err);
+                        });
+                    }
+                    console.log(`a player is not found ${player1} and ${player2}`);
+                    console.log(`a player is not found ${member1} and ${member2}`);
+                    return;
+                }
+                db.run('DELETE FROM queue WHERE userid IN (?, ?)', [player1, player2], (err) => {
+                    if (err) console.error('Error removing players from queue:', err);
+                });
+            }
+        }
+    });
+}
+setInterval(checkAndStartMatches, 5000);
 
 // database intial setup:
 //const sqlite3 = require('sqlite3').verbose();
@@ -95,10 +175,13 @@ const ranks = {bronze: 0, silver: 1, gold: 2, platinum: 3, diamond: 4, master: 5
 //
 //db.serialize(() => {
 //  db.run(`
-//    CREATE TABLE IF NOT EXISTS queue (
+//    CREATE TABLE IF NOT EXISTS players (
 //      id INTEGER PRIMARY KEY AUTOINCREMENT,
 //      username TEXT UNIQUE NOT NULL,
-//      rank INTEGER DEFAULT 0
+//      userid TEXT UNIQUE NOT NULL,
+//      rank INTEGER DEFAULT 0,
+//      points INTEGER DEFAULT 0,
+//      wins INTEGER DEFAULT 0
 //    )
 //  `, (err) => {
 //    if (err) {
@@ -108,3 +191,4 @@ const ranks = {bronze: 0, silver: 1, gold: 2, platinum: 3, diamond: 4, master: 5
 //    }
 //  });
 //});
+//

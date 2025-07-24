@@ -1,12 +1,12 @@
 const { SlashCommandBuilder } = require('discord.js');
 const db = require("../../db.js");
 
-function addPlayerToDb(username,callback){
+function addPlayerToDb(username,id,callback){
   const sql = `
-    INSERT INTO players (username, rank, points, wins)
-    VALUES (?, 0, 0, 0)
+    INSERT INTO players (username,userid, rank, points, wins)
+    VALUES (?, ?, 0, 0, 0)
   `;
-  db.run(sql, [username], function (err) {
+  db.run(sql, [username, id], function (err) {
     if (err) {
       // If error code is SQLITE_CONSTRAINT, it's a uniqueness violation
       if (err.code === 'SQLITE_CONSTRAINT') {
@@ -23,8 +23,9 @@ module.exports = {
 		.setName('register')
 		.setDescription('Registers you to the competition!'),
 	async execute(interaction) {
+      const id = interaction.user.id;
       const username = interaction.user.username;
-        addPlayerToDb(username, async (err, added) => {
+        addPlayerToDb(username, id, async (err, added) => {
             if (err) {
               console.error(err);
               await interaction.reply('An unexpected error occurred while registering.');

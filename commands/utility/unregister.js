@@ -1,11 +1,11 @@
 const { SlashCommandBuilder } = require('discord.js');
 const db = require("../../db.js");
-function removePlayerFromQueue(username,callback){
+function removePlayerFromQueue(id,callback){
     const sql = `
       DELETE FROM queue
-      WHERE username = ?
+      WHERE userid = ?
     `;
-    db.run(sql, [username], function (err) {
+    db.run(sql, [id], function (err) {
     if (err) {
         return callback(err);
     }
@@ -15,15 +15,15 @@ function removePlayerFromQueue(username,callback){
         callback(null, this.lastID);
     });
 }
-function removePlayerFromDb(username,callback){
-    removePlayerFromQueue(username, async (err,deleted) =>{
+function removePlayerFromDb(id,callback){
+    removePlayerFromQueue(id, async (err,deleted) =>{
         if(err) console.error(err);
     })
   const sql = `
     DELETE FROM players
-    WHERE username = ?
+    WHERE userid = ?
   `;
-  db.run(sql, [username], function (err) {
+  db.run(sql, [id], function (err) {
     if (err) return callback(err);
     if (this.changes === 0) {
       // No rows were deleted: user not found
@@ -38,15 +38,16 @@ module.exports = {
 		.setName('unregister')
 		.setDescription('Removes you from the competition'),
 	async execute(interaction) {
+        const id = interaction.user.id;
         const username = interaction.user.username;
-        removePlayerFromDb(username, async (err, removed) => {
+        removePlayerFromDb(id, async (err, removed) => {
             if (err) {
               console.error(err);
               return await interaction.reply('There was an error unregistering you.');
             } else if(!removed){
                 await interaction.reply(`You are not registered.`);
             } else {
-                await interaction.reply(`You are unregistered, ${interaction.user.username}.`);
+                await interaction.reply(`You are unregistered, ${username}.`);
             }
         })
 	},

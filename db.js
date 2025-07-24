@@ -1,4 +1,4 @@
-//fully ai I didn't know sql  
+//mostly ai I didn't know sql  
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
