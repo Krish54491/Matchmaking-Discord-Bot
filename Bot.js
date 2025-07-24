@@ -6,8 +6,8 @@
 // setup matches - Done
 // those matchs should have a timer(configurable)
 // at the end of match be able to take in a png file (a picture) and send it to desigated judges - scrapped
-// grant points and change ranks if needed
-// having a leaderboard system
+// grant points and change ranks if needed - Done
+// having a leaderboard system - Done
 
 
 const fs = require('node:fs');
