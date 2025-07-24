@@ -10,12 +10,13 @@
 // having a leaderboard system - Done
 
 
+
 const fs = require('node:fs');
 const path = require('node:path');
 const { Client, Collection, Events, GatewayIntentBits, MessageFlags } = require('discord.js');
 const { token } = require('./config.json');
 const db = require('./db.js');
-const { match } = require('node:assert');
+const {guildId} = require('./config.json'); // Assuming you have a config file with your guild ID
 // Create a new client instance
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
@@ -72,7 +73,8 @@ client.once(Events.ClientReady, readyClient => {
 // Log in to Discord with your client's token
 client.login(token);
 let timer = 60 // in minutes
-const ranks = {bronze: 0, silver: 1, gold: 2, platinum: 3, diamond: 4, master: 5, grandmaster: 6};
+// the rank names
+//const ranks = {bronze: 0, silver: 1, gold: 2, platinum: 3, diamond: 4, master: 5, grandmaster: 6};
 function findMatchingPlayers(callback) {
   const sql = `
     SELECT rank, GROUP_CONCAT(userid) as users, COUNT(*) as count
@@ -134,12 +136,21 @@ async function timerOutput(matchChannel){
         }
         timeLeft--;
     }, 1000);
+    deletionTimeLeft = 30*60;
+    const interval2 = setInterval(() => {
+        if (deletionTimeLeft <= 0) {
+            clearInterval(interval2);
+            matchChannel.delete();
+        }
+        deletionTimeLeft--;
+    }, 1000);
       
 }
-const announcementChannelId = "1397780307461017620";
+const announcementChannelId = "1332856006442618952";
+
 async function checkAndStartMatches() {
     findMatchingPlayers(async (err, matches) => {
-        const guild = client.guilds.cache.first();
+        const guild = client.guilds.cache.get(guildId);
         const channel = guild.channels.cache.get(announcementChannelId);
         if (err) {
             if (channel) await channel.send('Error checking queue for matches.');
@@ -154,6 +165,9 @@ async function checkAndStartMatches() {
                 const member2 = guild.members.cache.get(player2);
                 if (member1 && member2) {
                     const matchChannel = await createMatchChannel(guild, member1, member2, judgeRoleId);
+                    db.run('DELETE FROM queue WHERE userid IN (?, ?)', [player1, player2], (err) => {
+                        if (err) console.error('Error removing players from queue:', err);
+                    }); 
                     if (matchChannel) {
                         await matchChannel.send(`Match started between <@${player1}> and <@${player2}> (Rank: ${match.rank})!`);
                         await matchChannel.send(`Your prompt is: ${teamNames[Math.floor(Math.random() * teamNames.length)]}`);
@@ -173,9 +187,6 @@ async function checkAndStartMatches() {
                     console.log(`a player is not found ${player1} and ${player2}`);
                     return;
                 }
-                db.run('DELETE FROM queue WHERE userid IN (?, ?)', [player1, player2], (err) => {
-                if (err) console.error('Error removing players from queue:', err);
-            }); 
             }
         }
     });
