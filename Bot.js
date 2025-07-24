@@ -8,6 +8,8 @@
 // at the end of match be able to take in a png file (a picture) and send it to desigated judges
 // grant points and change ranks if needed
 // having a leaderboard system
+
+
 const fs = require('node:fs');
 const path = require('node:path');
 const { Client, Collection, Events, GatewayIntentBits, MessageFlags } = require('discord.js');
@@ -65,13 +67,12 @@ client.login(token);
 let timer = 60 // in minutes
 let queue = [];
 const ranks = {bronze: 0, silver: 1, gold: 2, platinum: 3, diamond: 4, master: 5, grandmaster: 6};
-let players = [];
 
 // how a player is defined
 //player = {
 //    username: "",
 //    rank: 0,
-//    points: 0, // 1000 points or more means upgrade in rank
+//    points: 0, // 100 points or more means upgrade in rank
 //    wins: 0,
 //
 //}
@@ -94,12 +95,10 @@ let players = [];
 //
 //db.serialize(() => {
 //  db.run(`
-//    CREATE TABLE IF NOT EXISTS players (
+//    CREATE TABLE IF NOT EXISTS queue (
 //      id INTEGER PRIMARY KEY AUTOINCREMENT,
 //      username TEXT UNIQUE NOT NULL,
-//      rank INTEGER DEFAULT 0,
-//      points INTEGER DEFAULT 0,
-//      wins INTEGER DEFAULT 0
+//      rank INTEGER DEFAULT 0
 //    )
 //  `, (err) => {
 //    if (err) {

@@ -1,5 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
 const db = require("../../db.js");
+
 function addPlayerToDb(username,callback){
   const sql = `
     INSERT INTO players (username, rank, points, wins)
@@ -22,7 +23,8 @@ module.exports = {
 		.setName('register')
 		.setDescription('Registers you to the competition!'),
 	async execute(interaction) {
-        addPlayerToDb(interaction.user.username, async (err, added) => {
+      const username = interaction.user.username;
+        addPlayerToDb(username, async (err, added) => {
             if (err) {
               console.error(err);
               await interaction.reply('An unexpected error occurred while registering.');

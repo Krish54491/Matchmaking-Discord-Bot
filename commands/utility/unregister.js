@@ -1,6 +1,24 @@
 const { SlashCommandBuilder } = require('discord.js');
 const db = require("../../db.js");
-function removePlayerToDb(username,callback){
+function removePlayerFromQueue(username,callback){
+    const sql = `
+      DELETE FROM queue
+      WHERE username = ?
+    `;
+    db.run(sql, [username], function (err) {
+    if (err) {
+        return callback(err);
+    }
+    if (this.changes === 0) {
+        return callback(null, false);
+    }
+        callback(null, this.lastID);
+    });
+}
+function removePlayerFromDb(username,callback){
+    removePlayerFromQueue(username, async (err,deleted) =>{
+        if(err) console.error(err);
+    })
   const sql = `
     DELETE FROM players
     WHERE username = ?
@@ -11,7 +29,7 @@ function removePlayerToDb(username,callback){
       // No rows were deleted: user not found
       return callback(null, false);
     }
-    callback(null, this.changes);
+    callback(null, true);
   });
 }
 
@@ -20,7 +38,8 @@ module.exports = {
 		.setName('unregister')
 		.setDescription('Removes you from the competition'),
 	async execute(interaction) {
-        removePlayerToDb(interaction.user.username, async (err, removed) => {
+        const username = interaction.user.username;
+        removePlayerFromDb(username, async (err, removed) => {
             if (err) {
               console.error(err);
               return await interaction.reply('There was an error unregistering you.');
