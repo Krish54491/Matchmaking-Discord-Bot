@@ -147,7 +147,7 @@ async function timerOutput(matchChannel){
     }, 1000);
       
 }
-const announcementChannelId = "1332856006442618952";
+const {announcementChannelId} = require('./config.json');
 
 async function checkAndStartMatches() {
     findMatchingPlayers(async (err, matches) => {
