@@ -17,6 +17,7 @@ const { Client, Collection, Events, GatewayIntentBits, MessageFlags } = require(
 const { token } = require('./config.json');
 const db = require('./db.js');
 const {guildId} = require('./config.json'); // Assuming you have a config file with your guild ID
+const {judgeRoleId} = require('./config.json');
 // Create a new client instance
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
@@ -160,7 +161,6 @@ async function checkAndStartMatches() {
             const players = match.users.split(",");
             if(players.length >= 2){
                 const [player1, player2] = players;
-                const judgeRoleId = '1361817820035289109'; // Replace with your Judge role ID
                 const member1 = guild.members.cache.get(player1);
                 const member2 = guild.members.cache.get(player2);
                 if (member1 && member2) {

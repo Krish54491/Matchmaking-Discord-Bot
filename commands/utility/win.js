@@ -1,7 +1,8 @@
 const { SlashCommandBuilder } = require('discord.js');
 const db = require("../../db.js");
 
-const judgeRoleId = "1361817820035289109";
+const {judgeRoleId} = require('../../config.json');
+
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('declare-win')
