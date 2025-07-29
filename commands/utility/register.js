@@ -1,6 +1,7 @@
 const { SlashCommandBuilder } = require('discord.js');
 const db = require("../../db.js");
-
+const {playerRoleId} = require('../../config.json');
+const {judgeRoleId} = require('../../config.json');
 function addPlayerToDb(username,id,callback){
   const sql = `
     INSERT INTO players (username,userid, rank, points, wins)
@@ -23,6 +24,10 @@ module.exports = {
 		.setName('register')
 		.setDescription('Registers you to the competition!'),
 	async execute(interaction) {
+    if (!interaction.member.roles.cache.has(playerRoleId) && !interaction.member.roles.cache.has(judgeRoleId)) {
+            await interaction.reply({ content: '❌ You do not have permission to use this command.', ephemeral: true });
+            return;
+        }
       const id = interaction.user.id;
       const username = interaction.user.username;
         addPlayerToDb(username, id, async (err, added) => {
@@ -30,7 +35,7 @@ module.exports = {
               console.error(err);
               await interaction.reply('An unexpected error occurred while registering.');
             } else if (!added) {
-              await interaction.reply('You are already registered!');
+              await interaction.reply('You are already registered!', { ephemeral: true });
             } else {
               await interaction.reply(`You are now registered, ${username}!`);
             }

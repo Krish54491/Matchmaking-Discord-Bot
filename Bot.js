@@ -18,17 +18,12 @@ const { token } = require('./config.json');
 const db = require('./db.js');
 const {guildId} = require('./config.json'); // Assuming you have a config file with your guild ID
 const {judgeRoleId} = require('./config.json');
+const adminConfig = require('./adminConfig.js');
 // Create a new client instance
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 client.commands = new Collection();
-const teamNames = [ // the prompts
-    "Swift",
-    "Redshyft",
-    "Tenshi",
-    "Pulse",
-    "Nixus",
-];
+
 const foldersPath = path.join(__dirname, 'commands');
 const commandFolders = fs.readdirSync(foldersPath);
 
@@ -73,7 +68,7 @@ client.once(Events.ClientReady, readyClient => {
 
 // Log in to Discord with your client's token
 client.login(token);
-let timer = 60 // in minutes
+
 // the rank names
 //const ranks = {bronze: 0, silver: 1, gold: 2, platinum: 3, diamond: 4, master: 5, grandmaster: 6};
 function findMatchingPlayers(callback) {
@@ -125,7 +120,7 @@ async function createMatchChannel(guild, player1, player2, judgeRoleId) {
     return channel;
 }
 async function timerOutput(matchChannel){
-    let timeLeft = timer * 60; // Convert minutes to seconds
+    let timeLeft = adminConfig.timer * 60; // Convert minutes to seconds
     const interval = setInterval(() => {
         if (timeLeft <= 0) {
             clearInterval(interval);
@@ -170,7 +165,7 @@ async function checkAndStartMatches() {
                     }); 
                     if (matchChannel) {
                         await matchChannel.send(`Match started between <@${player1}> and <@${player2}> (Rank: ${match.rank})!`);
-                        await matchChannel.send(`Your prompt is: ${teamNames[Math.floor(Math.random() * teamNames.length)]}`);
+                        await matchChannel.send(`Your prompt is: ${adminConfig.prompts[Math.floor(Math.random() * adminConfig.prompts.length)]}`);
                         await timerOutput(matchChannel);
                     }
                 } else {

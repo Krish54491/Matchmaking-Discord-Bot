@@ -49,11 +49,11 @@ module.exports = {
               console.error(err);
               await interaction.reply('An unexpected error occurred while unqueueing.');
             } else if(added === null) {
-              await interaction.reply('You are not registered! Please register first using /register.');
+              await interaction.reply('You are not registered! Please register first using /register.', { ephemeral: true });
             } else if (!added) {
-              await interaction.reply('You are not in queue!');
+              await interaction.reply('You are not in queue!', { ephemeral: true });
             } else {
-              await interaction.reply(`You are now unqueued, ${username}!`);
+              await interaction.reply(`You are now unqueued, ${username}!`, { ephemeral: true });
             }
         })
 	},

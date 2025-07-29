@@ -45,7 +45,7 @@ module.exports = {
               console.error(err);
               return await interaction.reply('There was an error unregistering you.');
             } else if(!removed){
-                await interaction.reply(`You are not registered.`);
+                await interaction.reply(`You are not registered.`, { ephemeral: true });
             } else {
                 await interaction.reply(`You are unregistered, ${username}.`);
             }
