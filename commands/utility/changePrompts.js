@@ -14,6 +14,10 @@ module.exports = {
                 .setDescription('Whether to add or remove a prompt')
                 .setRequired(true)),
     async execute(interaction) {
+        if (!interaction.member.roles.cache.has(judgeRoleId)) {
+            await interaction.reply({ content: '❌ You do not have permission to use this command.', ephemeral: true });
+            return;
+        }
         const newPrompt = interaction.options.getString('prompt');
         const actionType = interaction.options.getString('type');
 
@@ -37,5 +41,6 @@ module.exports = {
                 await interaction.reply({ content: `Prompt not found: ${newPrompt}`, ephemeral: true });
             }
         }
+        await interaction.reply({ content: `Current Prompts: ${adminConfig.prompts.join(', ')}`, ephemeral: true });
     },
 };

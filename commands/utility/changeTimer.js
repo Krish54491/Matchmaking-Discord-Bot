@@ -10,6 +10,10 @@ module.exports = {
                 .setDescription('The new timer duration in minutes')
                 .setRequired(true)),
     async execute(interaction) {
+        if (!interaction.member.roles.cache.has(judgeRoleId)) {
+            await interaction.reply({ content: '❌ You do not have permission to use this command.', ephemeral: true });
+            return;
+        }
         const newTimer = interaction.options.getInteger('minutes');
         if (newTimer < 1) {
             await interaction.reply({ content: 'Please provide a time greater than 0', ephemeral: true });
